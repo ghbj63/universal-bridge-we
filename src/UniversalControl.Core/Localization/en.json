@@ -363,5 +363,10 @@
   "新しい接続コード": "New connection code",
   "コードは5分間・1回だけ有効です。更新すると、接続済みの共有画面も切断します。": "The code expires after five minutes and can be used once. A new code also disconnects previously authorized pages.",
   "Windows → iPad：Windowsでコピーし、Safariで取得して「iPadへコピー」。iPad → Windows：Safariの欄に貼り付けて「Windowsへ送信」。テキストのみ、UTF-8で64 KiBまで。自動同期・画像・ファイルの共有には対応していません。": "Windows → iPad: copy on Windows, fetch in Safari, then tap Copy to iPad. iPad → Windows: paste into the Safari text box and tap Send to Windows. Plain text only, up to 64 KiB in UTF-8. Automatic sync, images and files are not supported.",
-  "更新をダウンロードしています… {0:P0} · {1:F1}/{2:F1} MiB · {3:F1} MiB/s": "Downloading update… {0:P0} · {1:F1}/{2:F1} MiB · {3:F1} MiB/s"
+  "更新をダウンロードしています… {0:P0} · {1:F1}/{2:F1} MiB · {3:F1} MiB/s": "Downloading update… {0:P0} · {1:F1}/{2:F1} MiB · {3:F1} MiB/s",
+  "テキスト編集": "Text editing",
+  "Windows形式のテキスト移動と選択を使用": "Use Windows-style text navigation and selection",
+  "UBでControlとCommandを交換": "Swap Control and Command in UB",
+  "iOS側でControlとCommandを交換済み *": "iOS already swaps Control and Command *",
+  "Home/End、Ctrl＋矢印、Ctrl＋Backspace/Deleteを変換します。Shiftで選択します。iOS側の設定に合わせてください。両方で交換すると通常のキーは二重に交換されます。変更するとWindowsへ戻ります。\n\n* iOS 27.0（他のバージョンでは異なる場合があります）で修飾キーの交換を設定するには、「設定」→「一般」→「キーボード」→「ハードウェアキーボード」→「修飾キー」を開きます。「ハードウェアキーボード」の設定を表示するには、通常、物理キーボード（またはUniversal Bridge）が端末に接続されている必要があります。": "Maps Home/End, Ctrl+arrows and Ctrl+Backspace/Delete. Hold Shift to select. Match the iOS setting to your device. Enabling both swaps cancels the swap for ordinary keys. Changes return control to Windows.\n\n* To configure modifier key swapping on an iOS 27.0 (may be different for other versions) mobile device, go to Settings → General → Keyboard → Hardware Keyboard → Modifier Keys. A physical keyboard (or Universal Bridge) usually must be connected to the device for Hardware Keyboard settings to appear."
 }

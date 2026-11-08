@@ -141,6 +141,9 @@ public partial class MainWindow : Window
         TouchpadSensitivityBox.Text = s.TouchpadScrollSensitivity.ToString("0.00", CultureInfo.InvariantCulture);
         MouseSensitivityBox.Text = s.MouseSensitivity.ToString("0.00", CultureInfo.InvariantCulture); RawMouseCheck.IsChecked = s.RawMouse;
         TouchpadCheck.IsChecked = s.CaptureTouchpad;
+        TextNavigationCheck.IsChecked = s.WindowsTextNavigation;
+        IosModifierSwapCheck.IsChecked = s.IosControlCommandSwapped;
+        ModifierSwapCheck.IsChecked = s.SwapControlCommand;
         FastPointerCheck.IsChecked = s.StabilizeFastPointer;
         LoadShortcutControls(s.ActivateShortcut, s.ReturnShortcut, s.HomeShortcut, s.SearchShortcut, s.NextAppShortcut);
         AdditionalShortcutsList.ItemsSource = s.AdditionalShortcuts.Select(entry => new ActionShortcutRow(entry)).ToArray();
@@ -265,6 +268,9 @@ public partial class MainWindow : Window
                 EdgeDwellMs = (int)EdgeDwellSlider.Value, IPadShortcutsEnabled = IPadShortcutsCheck.IsChecked == true,
                 MouseSensitivity = MouseSlider.Value, ScrollSensitivity = ScrollSlider.Value,
                 TouchpadScrollSensitivity = TouchpadScrollSlider.Value,
+                WindowsTextNavigation = TextNavigationCheck.IsChecked == true,
+                IosControlCommandSwapped = IosModifierSwapCheck.IsChecked == true,
+                SwapControlCommand = ModifierSwapCheck.IsChecked == true,
                 RawMouse = RawMouseCheck.IsChecked == true,
                 CaptureTouchpad = TouchpadCheck.IsChecked == true,
                 StabilizeFastPointer = FastPointerCheck.IsChecked == true,

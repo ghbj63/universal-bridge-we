@@ -70,7 +70,13 @@
               <WrapPanel Margin="0,10,0,0"><Button Content="− 0.25" Tag="-0.25" Click="StepTouchpadSensitivity" Padding="10,6"/><TextBox x:Name="TouchpadSensitivityBox" Width="80" Margin="10,0" TextAlignment="Center" VerticalContentAlignment="Center" AutomationProperties.Name="{DynamicResource TouchpadScrollLabel}" LostKeyboardFocus="CommitTouchpadSensitivity" KeyDown="TouchpadSensitivityKeyDown"/><Button Content="＋ 0.25" Tag="0.25" Click="StepTouchpadSensitivity" Padding="10,6"/><Button Content="{DynamicResource RecommendedScroll}" Click="ResetTouchpadSensitivity" Margin="12,0,0,0" Padding="10,6"/></WrapPanel>
               <Slider x:Name="TouchpadScrollSlider" Minimum="0.25" Maximum="12" TickFrequency="0.25" IsSnapToTickEnabled="True" SmallChange="0.25" LargeChange="1" AutomationProperties.Name="{DynamicResource TouchpadScrollLabel}" ValueChanged="InputSliderChanged" Margin="0,12,0,8"/>
               <TextBlock Text="{DynamicResource TouchpadScrollHelp}" Foreground="{DynamicResource Muted}" FontSize="12" Margin="0,0,0,22"/>
-              <TextBlock Text="{DynamicResource L047}" FontSize="17" FontWeight="SemiBold"/><TextBlock Text="{DynamicResource L048}" Foreground="{DynamicResource Muted}" Margin="0,8,0,18"/>
+              <TextBlock Text="{DynamicResource L047}" FontSize="17" FontWeight="SemiBold"/>
+              <TextBlock Text="{DynamicResource TextNavigationHeading}" FontSize="17" FontWeight="SemiBold" Margin="0,16,0,8"/>
+              <CheckBox x:Name="TextNavigationCheck" Content="{DynamicResource TextNavigationLabel}" Click="SaveControls"/>
+              <CheckBox x:Name="IosModifierSwapCheck" Content="{DynamicResource IosModifierSwapLabel}" Click="SaveControls"/>
+              <CheckBox x:Name="ModifierSwapCheck" Content="{DynamicResource ModifierSwapLabel}" Click="SaveControls"/>
+              <TextBlock Text="{DynamicResource TextNavigationHelp}" TextWrapping="Wrap" Foreground="{DynamicResource Muted}" FontSize="12" Margin="0,4,0,18"/>
+              <TextBlock Text="{DynamicResource L048}" Foreground="{DynamicResource Muted}" Margin="0,8,0,18"/>
               <TextBlock Text="{DynamicResource L049}" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,8"/>
               <CheckBox x:Name="TouchpadCheck" Content="{DynamicResource L050}" Click="SaveControls"/>
               <TextBlock x:Name="TouchpadStatusLabel" Foreground="{DynamicResource Muted}" FontSize="12"/>

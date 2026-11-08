@@ -179,7 +179,8 @@ public sealed class BridgeController : IAsyncDisposable
     public void Save(AppSettings settings)
     {
         var normalized = settings.Normalize();
-        if (normalized.RawMouse != Settings.RawMouse || normalized.CaptureTouchpad != Settings.CaptureTouchpad || normalized.StabilizeFastPointer != Settings.StabilizeFastPointer || normalized.IPadShortcutsEnabled != Settings.IPadShortcutsEnabled ||
+        if (normalized.WindowsTextNavigation != Settings.WindowsTextNavigation || normalized.IosControlCommandSwapped != Settings.IosControlCommandSwapped || normalized.SwapControlCommand != Settings.SwapControlCommand ||
+            normalized.RawMouse != Settings.RawMouse || normalized.CaptureTouchpad != Settings.CaptureTouchpad || normalized.StabilizeFastPointer != Settings.StabilizeFastPointer || normalized.IPadShortcutsEnabled != Settings.IPadShortcutsEnabled ||
             normalized.AutoSwitch != Settings.AutoSwitch || normalized.ReturnAtEdge != Settings.ReturnAtEdge || normalized.Edge != Settings.Edge || normalized.MonitorId != Settings.MonitorId ||
             normalized.PortalStart != Settings.PortalStart || normalized.PortalEnd != Settings.PortalEnd || normalized.VirtualWidth != Settings.VirtualWidth || normalized.VirtualHeight != Settings.VirtualHeight)
             Router.GoLocal(L.T("入力方式を変更したためWindowsへ戻しました"));

@@ -121,5 +121,10 @@
   "ClipboardConnectHelp": "証明書の設定後は、下のHTTPSのURLを開き、6桁の接続コードを入力します。",
   "ClipboardNewCode": "新しい接続コード",
   "ClipboardCodeHelp": "コードは5分間・1回だけ有効です。更新すると、接続済みの共有画面も切断します。",
-  "ClipboardUseHelp": "Windows → iPad：Windowsでコピーし、Safariで取得して「iPadへコピー」。iPad → Windows：Safariの欄に貼り付けて「Windowsへ送信」。テキストのみ、UTF-8で64 KiBまで。自動同期・画像・ファイルの共有には対応していません。"
+  "ClipboardUseHelp": "Windows → iPad：Windowsでコピーし、Safariで取得して「iPadへコピー」。iPad → Windows：Safariの欄に貼り付けて「Windowsへ送信」。テキストのみ、UTF-8で64 KiBまで。自動同期・画像・ファイルの共有には対応していません。",
+  "TextNavigationHeading": "テキスト編集",
+  "TextNavigationLabel": "Windows形式のテキスト移動と選択を使用",
+  "IosModifierSwapLabel": "iOS側でControlとCommandを交換済み *",
+  "ModifierSwapLabel": "UBでControlとCommandを交換",
+  "TextNavigationHelp": "Home/End、Ctrl＋矢印、Ctrl＋Backspace/Deleteを変換します。Shiftで選択します。iOS側の設定に合わせてください。両方で交換すると通常のキーは二重に交換されます。変更するとWindowsへ戻ります。\n\n* iOS 27.0（他のバージョンでは異なる場合があります）で修飾キーの交換を設定するには、「設定」→「一般」→「キーボード」→「ハードウェアキーボード」→「修飾キー」を開きます。「ハードウェアキーボード」の設定を表示するには、通常、物理キーボード（またはUniversal Bridge）が端末に接続されている必要があります。"
 }

@@ -1,3 +1,7 @@
+> **Universal Bridge+WE — Windows-style keyboard editing on iOS via Bluetooth HID**
+>
+> This branch adds optional Windows-style text editing. See the [Universal Bridge+WE overview](README.WE.md) for setup and validation. Original upstream documentation follows.
+
 # Universal Bridge
 
 <img src="docs/images/app-icon.png" width="96" height="96" alt="Universal Bridge アイコン">

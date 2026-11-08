@@ -17,6 +17,9 @@ public sealed record AppSettings
     public ShortcutBinding HomeShortcut { get; init; } = ShortcutBinding.DefaultHome;
     public ShortcutBinding SearchShortcut { get; init; } = ShortcutBinding.DefaultSearch;
     public ShortcutBinding NextAppShortcut { get; init; } = ShortcutBinding.DefaultNextApp;
+    public bool WindowsTextNavigation { get; init; }
+    public bool IosControlCommandSwapped { get; init; }
+    public bool SwapControlCommand { get; init; }
     public bool IPadShortcutsEnabled { get; init; } = true;
     public IReadOnlyList<ActionShortcut> AdditionalShortcuts { get; init; } = ActionShortcuts.Defaults;
     public GestureAction SwipeLeft { get; init; } = GestureAction.NextApp;

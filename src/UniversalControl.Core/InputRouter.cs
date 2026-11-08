@@ -11,6 +11,7 @@ public sealed class InputRouter
     private readonly ReportDispatcher _dispatcher;
     private readonly Dictionary<long, int> _physical = [];
     private readonly Dictionary<long, (byte Modifier, byte Usage)> _remoteKeys = [];
+    private readonly TextNavigationMapper _textNavigation = new();
     private readonly HashSet<long> _quarantine = [];
     private readonly MotionAccumulator _motion = new();
     private readonly PointerMotion _pointer = new();
@@ -47,7 +48,18 @@ public sealed class InputRouter
         _transport = transport; _dispatcher = dispatcher;
         _dispatcher.Failed += GoLocal;
     }
-    public void Configure(AppSettings settings) { lock (_gate) { _settings = settings.Normalize(); ResetReturnMotion(); } }
+    public void Configure(AppSettings settings)
+    {
+        lock (_gate)
+        {
+            var normalized = settings.Normalize();
+            if (normalized.WindowsTextNavigation != _settings.WindowsTextNavigation ||
+                normalized.IosControlCommandSwapped != _settings.IosControlCommandSwapped ||
+                normalized.SwapControlCommand != _settings.SwapControlCommand)
+                GoLocal(); // Never reinterpret keys already held under another configuration.
+            _settings = normalized; ResetReturnMotion();
+        }
+    }
 
     public async Task<bool> ActivateAsync(string target, Func<bool> captureAvailable)
         => await TryActivateAsync(target, captureAvailable) == ActivationStatus.Activated;
@@ -100,7 +112,7 @@ public sealed class InputRouter
             _remote = false; _epoch++; _dispatcher.SetEpoch(_epoch);
             _quarantine.UnionWith(_remoteKeys.Keys);
             _quarantineButtons |= _remoteButtons;
-            _remoteKeys.Clear(); _remoteButtons = 0; _motion.Clear(); _pointer.Clear(); _horizontalScroll.Clear(); _touchpadScroll.Reset(); _touchpadWheel.Clear(); Reason = reason;
+            _remoteKeys.Clear(); _textNavigation.Reset(); _remoteButtons = 0; _motion.Clear(); _pointer.Clear(); _horizontalScroll.Clear(); _touchpadScroll.Reset(); _touchpadWheel.Clear(); Reason = reason;
         }
         if (previous is not null) _ = _dispatcher.NeutralizeAsync(previous);
         Changed?.Invoke();
@@ -158,10 +170,11 @@ public sealed class InputRouter
                 if (down && !wasDown)
                 {
                     FlushMotion();
-                    byte heldModifiers = 0;
-                    foreach (var key in _remoteKeys.Values) heldModifiers |= key.Modifier;
-                    _dispatcher.Enqueue(_target!, _epoch, HidReports.Keyboard(1, [0x2C]));
-                    _dispatcher.Enqueue(_target!, _epoch, HidReports.Keyboard(heldModifiers, _remoteKeys.Values.Select(k => k.Usage)));
+                    if (!_remote) return true;
+                    var restore = _textNavigation.CurrentReport;
+                    var languageTarget = _target!; var languageEpoch = _epoch;
+                    if (_dispatcher.Enqueue(languageTarget, languageEpoch, HidReports.Keyboard(1, [0x2C])))
+                        _dispatcher.Enqueue(languageTarget, languageEpoch, restore);
                 }
                 return true;
             }
@@ -174,9 +187,10 @@ public sealed class InputRouter
             else if (!down) _remoteKeys.Remove(id);
             else return true; // Let iPadOS perform key repeat from the held HID state.
             FlushMotion();
-            byte modifiers = 0;
-            foreach (var key in _remoteKeys.Values) modifiers |= key.Modifier;
-            _dispatcher.Enqueue(_target!, _epoch, HidReports.Keyboard(modifiers, _remoteKeys.Values.Select(k => k.Usage)));
+            if (!_remote) return true;
+            var target = _target!; var epoch = _epoch;
+            foreach (var frame in _textNavigation.Update(id, down, _remoteKeys, _settings))
+                if (!_dispatcher.Enqueue(target, epoch, frame)) break;
             return true;
         }
     }
@@ -275,7 +289,7 @@ public sealed class InputRouter
         FlushMotion(); if (!_remote) return;
         var target = _target!; var epoch = _epoch;
         var (modifiers, usage) = TouchpadGestures.Shortcut(action);
-        var held = _remoteKeys.Values.Aggregate((byte)0, (value, key) => (byte)(value | key.Modifier));
+        var held = TextNavigationMapper.PassthroughModifiers(_remoteKeys.Values.Aggregate((byte)0, (value, key) => (byte)(value | key.Modifier)), _settings);
         // Remove the local Ctrl/Alt chord from the command; restore held modifiers afterwards.
         // Snapshot the epoch so a synchronous queue failure cannot send keys into the next mode.
         _ = _dispatcher.Enqueue(target, epoch, HidReports.Keyboard(0, [])) &&
