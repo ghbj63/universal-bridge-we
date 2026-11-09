@@ -195,21 +195,29 @@ public static class HeadlessVerification
                     var gestureRegistered = input.TouchpadAvailable;
                     var rebind = await input.UpdateShortcutsAsync(new(ShortcutModifiers.Control | ShortcutModifiers.Alt, 0x86), new(ShortcutModifiers.Control | ShortcutModifiers.Alt, 0x85)) is null;
                     rebind &= await input.UpdateShortcutsAsync(ShortcutBinding.DefaultActivate, ShortcutBinding.DefaultReturn) is null;
-                    bool rollback;
+                    var toggleRebind = await input.UpdateShortcutsAsync(ShortcutBinding.DefaultActivate, ShortcutBinding.DefaultReturn,
+                        new(ShortcutModifiers.Control | ShortcutModifiers.Alt, 0x85), true) is null && input.ToggleHotkeyRegistered;
+                    bool rollback, toggleRollback;
                     if (!RegisterHotKey(0, 99, 0x4006, 0x87)) throw new InvalidOperationException(L.T("競合テスト用ショートカットを予約できませんでした。"));
                     try
                     {
                         rollback = await input.UpdateShortcutsAsync(new(ShortcutModifiers.Control | ShortcutModifiers.Shift, 0x87), ShortcutBinding.DefaultReturn) is not null &&
-                            input.ReturnHotkeyRegistered && input.ActivationHotkeyRegistered;
+                            input.ReturnHotkeyRegistered && input.ActivationHotkeyRegistered && input.ToggleHotkeyRegistered;
+                        toggleRollback = await input.UpdateShortcutsAsync(ShortcutBinding.DefaultActivate, ShortcutBinding.DefaultReturn,
+                            new(ShortcutModifiers.Control | ShortcutModifiers.Shift, 0x87), true) is not null &&
+                            input.ReturnHotkeyRegistered && input.ActivationHotkeyRegistered && input.ToggleHotkeyRegistered;
                     }
                     finally { UnregisterHotKey(0, 99); }
+                    var toggleDisabled = await input.UpdateShortcutsAsync(ShortcutBinding.DefaultActivate, ShortcutBinding.DefaultReturn,
+                        ShortcutBinding.DefaultToggle, false) is null && !input.ToggleHotkeyRegistered;
                     input.Dispose();
-                    var success = installed && rawRegistered && hotkeyRegistered && rebind && rollback && (!NativeInput.IsTouchpadSupported() || gestureRegistered) &&
+                    var success = toggleRebind && toggleRollback && toggleDisabled && installed && rawRegistered && hotkeyRegistered && rebind && rollback && (!NativeInput.IsTouchpadSupported() || gestureRegistered) &&
                         !input.Available && !input.RawMouseAvailable && !input.TouchpadAvailable && !router.IsRemote;
                     await WriteAsync(directory, "input-verification.json", new { Success = success,
                         HooksInstalled = installed, HooksRemoved = !input.Available, RawInputRegistered = rawRegistered, RawInputRemoved = !input.RawMouseAvailable,
                         ActivationHotkeyRegistered = hotkeyRegistered, TouchpadControllerStarted = gestureRegistered, TouchpadControllerRemoved = !input.TouchpadAvailable,
                         LiveShortcutRebindPassed = rebind, ShortcutConflictRollbackPassed = rollback,
+                        ToggleRebindPassed = toggleRebind, ToggleConflictRollbackPassed = toggleRollback, ToggleDisabledPassed = toggleDisabled,
                         PreciseMotionTiming = preciseTiming, RawPacketsObserved = rawPackets, InputSuppressed = router.IsRemote, OnDefaultDesktop = NativeInput.OnDefaultDesktop(), At = DateTimeOffset.Now });
                     return success ? 0 : 2;
                 }

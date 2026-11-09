@@ -14,6 +14,8 @@ public sealed record AppSettings
     public bool StabilizeFastPointer { get; init; } = true;
     public ShortcutBinding ActivateShortcut { get; init; } = ShortcutBinding.DefaultActivate;
     public ShortcutBinding ReturnShortcut { get; init; } = ShortcutBinding.DefaultReturn;
+    public bool ToggleShortcutEnabled { get; init; }
+    public ShortcutBinding ToggleShortcut { get; init; } = ShortcutBinding.DefaultToggle;
     public ShortcutBinding HomeShortcut { get; init; } = ShortcutBinding.DefaultHome;
     public ShortcutBinding SearchShortcut { get; init; } = ShortcutBinding.DefaultSearch;
     public ShortcutBinding NextAppShortcut { get; init; } = ShortcutBinding.DefaultNextApp;
@@ -51,6 +53,9 @@ public sealed record AppSettings
         var home = ShortcutBinding.Resolve(HomeShortcut, ShortcutBinding.DefaultHome, used);
         var search = ShortcutBinding.Resolve(SearchShortcut, ShortcutBinding.DefaultSearch, used);
         var nextApp = ShortcutBinding.Resolve(NextAppShortcut, ShortcutBinding.DefaultNextApp, used);
+        // Preserve every existing binding when adding the optional toggle to older profiles.
+        var additional = ActionShortcuts.Normalize(AdditionalShortcuts, used);
+        var toggle = ShortcutBinding.Resolve(ToggleShortcut, ShortcutBinding.DefaultToggle, used);
         return this with
         {
         SchemaVersion = 1, Theme = Theme == "Dark" ? "Dark" : "Light",
@@ -58,7 +63,7 @@ public sealed record AppSettings
         ActivateShortcut = validShortcuts ? ActivateShortcut! : ShortcutBinding.DefaultActivate,
         ReturnShortcut = validShortcuts ? ReturnShortcut! : ShortcutBinding.DefaultReturn,
         HomeShortcut = home, SearchShortcut = search, NextAppShortcut = nextApp,
-        AdditionalShortcuts = ActionShortcuts.Normalize(AdditionalShortcuts, used),
+        AdditionalShortcuts = additional, ToggleShortcut = toggle,
         SwipeLeft = Enum.IsDefined(SwipeLeft) ? SwipeLeft : GestureAction.NextApp,
         SwipeRight = Enum.IsDefined(SwipeRight) ? SwipeRight : GestureAction.PreviousApp,
         SwipeUp = Enum.IsDefined(SwipeUp) ? SwipeUp : GestureAction.NextApp,

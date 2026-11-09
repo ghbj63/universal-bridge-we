@@ -60,6 +60,7 @@ public sealed class NativeInput : IDisposable
         return Interlocked.Read(ref _motionTimerTicks) - before;
     }
     public bool ActivationHotkeyRegistered { get; private set; }
+    public bool ToggleHotkeyRegistered { get; private set; }
     public bool ReturnHotkeyRegistered { get; private set; }
     public bool TouchpadAvailable => _touchpad?.Available == true;
     public bool TouchpadActive => _touchpad?.Active == true;
@@ -153,7 +154,8 @@ public sealed class NativeInput : IDisposable
     }
     public void Configure(AppSettings settings, IReadOnlyList<DisplayInfo> displays)
     { if (_settings.RawMouse != settings.RawMouse) _rawFallback = false; _settings = settings; _displays = displays; Interlocked.Increment(ref _edgeRevision); }
-    public Task<string?> UpdateShortcutsAsync(ShortcutBinding activate, ShortcutBinding back) => InvokeAsync(() => RebindShortcuts(activate, back));
+    public Task<string?> UpdateShortcutsAsync(ShortcutBinding activate, ShortcutBinding back, ShortcutBinding? toggle = null, bool? toggleEnabled = null)
+        => InvokeAsync(() => RebindShortcuts(activate, back, toggle ?? _settings.ToggleShortcut, toggleEnabled ?? _settings.ToggleShortcutEnabled));
     public async Task<bool> ConfirmModeAsync()
     { await InvokeAsync(() => { SynchronizeMode(); return null; }); return _router.IsRemote && _nativeRemote; }
     private Task<string?> InvokeAsync(Func<string?> action)
@@ -164,18 +166,21 @@ public sealed class NativeInput : IDisposable
         if (!PostThreadMessage(_threadId, Command, 0, 0)) result.TrySetException(new Win32Exception(Marshal.GetLastWin32Error()));
         return result.Task;
     }
-    private string? RebindShortcuts(ShortcutBinding activate, ShortcutBinding back)
+    private string? RebindShortcuts(ShortcutBinding activate, ShortcutBinding back, ShortcutBinding toggle, bool toggleEnabled)
     {
         ShortcutBinding.ValidatePair(activate, back);
+        ShortcutBinding.ValidateToggle(toggleEnabled ? toggle : null, activate, back);
         var old = _settings;
-        UnregisterHotKey(0, 1); UnregisterHotKey(0, 2);
+        UnregisterHotKey(0, 1); UnregisterHotKey(0, 2); UnregisterHotKey(0, 3);
         ReturnHotkeyRegistered = RegisterHotKey(0, 1, 0x4000 | (uint)back.Modifiers, (uint)back.Key);
         ActivationHotkeyRegistered = RegisterHotKey(0, 2, 0x4000 | (uint)activate.Modifiers, (uint)activate.Key);
-        if (ReturnHotkeyRegistered && ActivationHotkeyRegistered)
-        { _settings = old with { ActivateShortcut = activate, ReturnShortcut = back }; return null; }
-        UnregisterHotKey(0, 1); UnregisterHotKey(0, 2);
+        ToggleHotkeyRegistered = toggleEnabled && RegisterHotKey(0, 3, 0x4000 | (uint)toggle.Modifiers, (uint)toggle.Key);
+        if (ReturnHotkeyRegistered && ActivationHotkeyRegistered && (!toggleEnabled || ToggleHotkeyRegistered))
+        { _settings = old with { ActivateShortcut = activate, ReturnShortcut = back, ToggleShortcut = toggle, ToggleShortcutEnabled = toggleEnabled }; return null; }
+        UnregisterHotKey(0, 1); UnregisterHotKey(0, 2); UnregisterHotKey(0, 3);
         ReturnHotkeyRegistered = RegisterHotKey(0, 1, 0x4000 | (uint)old.ReturnShortcut.Modifiers, (uint)old.ReturnShortcut.Key);
         ActivationHotkeyRegistered = RegisterHotKey(0, 2, 0x4000 | (uint)old.ActivateShortcut.Modifiers, (uint)old.ActivateShortcut.Key);
+        ToggleHotkeyRegistered = old.ToggleShortcutEnabled && RegisterHotKey(0, 3, 0x4000 | (uint)old.ToggleShortcut.Modifiers, (uint)old.ToggleShortcut.Key);
         if (!ReturnHotkeyRegistered) _router.GoLocal(L.T("復帰ショートカットの再登録に失敗しました。アプリを再起動してください。"));
         return L.T("指定したショートカットは他のアプリで使用中です。元の設定を維持しました。");
     }
@@ -268,6 +273,9 @@ public sealed class NativeInput : IDisposable
             if (!ReturnHotkeyRegistered) throw new Win32Exception(Marshal.GetLastWin32Error(), _settings.ReturnShortcut + L.T(" は別のアプリで使用中です。入力設定で復帰ショートカットを変更してください。"));
             ActivationHotkeyRegistered = RegisterHotKey(0, 2, 0x4000 | (uint)_settings.ActivateShortcut.Modifiers, (uint)_settings.ActivateShortcut.Key);
             if (!ActivationHotkeyRegistered) ThreadPool.QueueUserWorkItem(_ => Faulted?.Invoke(_settings.ActivateShortcut + L.T(" は別のアプリで使用中です。入力設定で変更してください。")));
+            ToggleHotkeyRegistered = _settings.ToggleShortcutEnabled && RegisterHotKey(0, 3, 0x4000 | (uint)_settings.ToggleShortcut.Modifiers, (uint)_settings.ToggleShortcut.Key);
+            if (_settings.ToggleShortcutEnabled && !ToggleHotkeyRegistered)
+                ThreadPool.QueueUserWorkItem(_ => Faulted?.Invoke(_settings.ToggleShortcut + L.T(" は別のアプリで使用中です。入力設定で変更してください。")));
             if (OperatingSystem.IsWindowsVersionAtLeast(10, 0, 26100))
             {
                 var touchpad = new TouchpadCapture(_router, text => ThreadPool.QueueUserWorkItem(_ => Faulted?.Invoke(text)));
@@ -318,11 +326,15 @@ public sealed class NativeInput : IDisposable
                 }
                 else if (message.Message == Hotkey)
                 {
-                    var binding = message.WParam == 1 ? _settings.ReturnShortcut : _settings.ActivateShortcut;
+                    if (message.WParam != 1 && message.WParam != 2 && message.WParam != 3) continue;
+                    if (message.WParam == 3 && (!_settings.ToggleShortcutEnabled || !ToggleHotkeyRegistered)) continue;
+                    var binding = message.WParam == 1 ? _settings.ReturnShortcut : message.WParam == 2 ? _settings.ActivateShortcut : _settings.ToggleShortcut;
                     var key = (int)((long)message.LParam >> 16) & 0xFFFF; var modifiers = (int)message.LParam & 7;
                     if (key != binding.Key || modifiers != (int)binding.Modifiers) continue;
                     if (message.WParam == 1) _router.GoLocal(L.T("ショートカットでWindowsへ戻しました"));
-                    else if (message.WParam == 2 && !_router.IsRemote) RequestActivation();
+                    // Remote toggle presses are consumed synchronously by InputRouter.Key.
+                    // Only the local activation half reaches WM_HOTKEY; do not toggle again here.
+                    else if ((message.WParam == 2 || message.WParam == 3) && !_router.IsRemote) RequestActivation();
                 }
                 else { TranslateMessage(ref message); DispatchMessage(ref message); }
             }
@@ -338,7 +350,7 @@ public sealed class NativeInput : IDisposable
             _rawMouse?.Dispose(); _rawMouse = null;
             _motionTimer?.Dispose(); _motionTimer = null;
             _touchpad?.Dispose(); _touchpad = null;
-            UnregisterHotKey(0, 1); UnregisterHotKey(0, 2); ActivationHotkeyRegistered = ReturnHotkeyRegistered = false;
+            UnregisterHotKey(0, 1); UnregisterHotKey(0, 2); UnregisterHotKey(0, 3); ToggleHotkeyRegistered = ActivationHotkeyRegistered = ReturnHotkeyRegistered = false;
             while (_commands.TryDequeue(out var command)) command.Result.TrySetException(new InvalidOperationException(L.T("入力監視を終了しました。")));
             if (_timerId != 0) KillTimer(0, _timerId); _timerId = 0; _threadId = 0;
         }

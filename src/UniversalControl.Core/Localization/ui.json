@@ -126,5 +126,7 @@
   "TextNavigationLabel": "Windows形式のテキスト移動と選択を使用",
   "IosModifierSwapLabel": "iOS側でControlとCommandを交換済み *",
   "ModifierSwapLabel": "UBでControlとCommandを交換",
-  "TextNavigationHelp": "Home/End、Ctrl＋矢印、Ctrl＋Backspace/Deleteを変換します。Shiftで選択します。iOS側の設定に合わせてください。両方で交換すると通常のキーは二重に交換されます。変更するとWindowsへ戻ります。\n\n* iOS 27.0（他のバージョンでは異なる場合があります）で修飾キーの交換を設定するには、「設定」→「一般」→「キーボード」→「ハードウェアキーボード」→「修飾キー」を開きます。「ハードウェアキーボード」の設定を表示するには、通常、物理キーボード（またはUniversal Bridge）が端末に接続されている必要があります。"
+  "TextNavigationHelp": "Home/End、Ctrl＋矢印、Ctrl＋Backspace/Deleteを変換します。Shiftで選択します。iOS側の設定に合わせてください。両方で交換すると通常のキーは二重に交換されます。変更するとWindowsへ戻ります。\n\n* iOS 27.0（他のバージョンでは異なる場合があります）で修飾キーの交換を設定するには、「設定」→「一般」→「キーボード」→「ハードウェアキーボード」→「修飾キー」を開きます。「ハードウェアキーボード」の設定を表示するには、通常、物理キーボード（またはUniversal Bridge）が端末に接続されている必要があります。",
+  "ToggleShortcutLabel": "相互切り替え",
+  "ToggleShortcutHelp": "有効にすると、同じショートカットでiPadとWindowsを切り替えます。iPadへ移るときはキーを離してください。Escを3回押すと常にWindowsへ戻ります。"
 }

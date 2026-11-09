@@ -145,7 +145,7 @@ public partial class MainWindow : Window
         IosModifierSwapCheck.IsChecked = s.IosControlCommandSwapped;
         ModifierSwapCheck.IsChecked = s.SwapControlCommand;
         FastPointerCheck.IsChecked = s.StabilizeFastPointer;
-        LoadShortcutControls(s.ActivateShortcut, s.ReturnShortcut, s.HomeShortcut, s.SearchShortcut, s.NextAppShortcut);
+        LoadShortcutControls(s.ActivateShortcut, s.ReturnShortcut, s.HomeShortcut, s.SearchShortcut, s.NextAppShortcut, s.ToggleShortcut, s.ToggleShortcutEnabled);
         AdditionalShortcutsList.ItemsSource = s.AdditionalShortcuts.Select(entry => new ActionShortcutRow(entry)).ToArray();
         var gestureChoices = GestureChoices;
         foreach (var pair in new[] { (SwipeLeftCombo, s.SwipeLeft), (SwipeRightCombo, s.SwipeRight), (SwipeUpCombo, s.SwipeUp), (SwipeDownCombo, s.SwipeDown) })
@@ -304,9 +304,10 @@ public partial class MainWindow : Window
     private void LayoutChanged(object sender, SelectionChangedEventArgs e) => SaveControls(sender, e);
     private void LayoutSliderChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => SaveControls(sender, e);
     private void InputSliderChanged(object sender, RoutedPropertyChangedEventArgs<double> e) => SaveControls(sender, e);
-    private void LoadShortcutControls(ShortcutBinding activate, ShortcutBinding back, ShortcutBinding home, ShortcutBinding search, ShortcutBinding nextApp)
+    private void LoadShortcutControls(ShortcutBinding activate, ShortcutBinding back, ShortcutBinding home, ShortcutBinding search, ShortcutBinding nextApp, ShortcutBinding? toggle = null, bool toggleEnabled = false)
     {
-        foreach (var (mods, key, binding) in new[] { (ActivateModsCombo, ActivateKeyCombo, activate), (ReturnModsCombo, ReturnKeyCombo, back),
+        ToggleShortcutCheck.IsChecked = toggleEnabled;
+        foreach (var (mods, key, binding) in new[] { (ToggleModsCombo, ToggleKeyCombo, toggle ?? ShortcutBinding.DefaultToggle), (ActivateModsCombo, ActivateKeyCombo, activate), (ReturnModsCombo, ReturnKeyCombo, back),
             (HomeModsCombo, HomeKeyCombo, home), (SearchModsCombo, SearchKeyCombo, search), (NextAppModsCombo, NextAppKeyCombo, nextApp) })
         {
             mods.ItemsSource = ModifierChoices; key.ItemsSource = KeyChoices;
@@ -351,7 +352,8 @@ public partial class MainWindow : Window
     }
     private Task SaveShortcutControlsAsync() => Controller.ApplyShortcutsAsync(ReadShortcut(ActivateModsCombo, ActivateKeyCombo), ReadShortcut(ReturnModsCombo, ReturnKeyCombo),
         ReadShortcut(HomeModsCombo, HomeKeyCombo), ReadShortcut(SearchModsCombo, SearchKeyCombo), ReadShortcut(NextAppModsCombo, NextAppKeyCombo),
-        AdditionalShortcutsList.Items.Cast<ActionShortcutRow>().Select(row => row.ToSetting()).ToArray());
+        AdditionalShortcutsList.Items.Cast<ActionShortcutRow>().Select(row => row.ToSetting()).ToArray(),
+        ReadShortcut(ToggleModsCombo, ToggleKeyCombo), ToggleShortcutCheck.IsChecked == true);
     private async void ApplyShortcuts(object sender, RoutedEventArgs e)
     {
         if (!ApplyShortcutsButton.IsEnabled) return;
@@ -542,6 +544,21 @@ public partial class MainWindow : Window
                 if (!rejected || new SettingsStore(_dataDirectory).Load().NextAppShortcut.Key != 0x7B)
                     throw new InvalidOperationException("Duplicate shortcuts were not rejected atomically.");
                 DefaultShortcuts(this, new RoutedEventArgs()); await SaveShortcutControlsAsync();
+                ToggleShortcutCheck.IsChecked = true;
+                ToggleKeyCombo.SelectedItem = KeyChoices.First(key => key.Value == 0x85);
+                await SaveShortcutControlsAsync();
+                var toggleSaved = new SettingsStore(_dataDirectory).Load();
+                if (!toggleSaved.ToggleShortcutEnabled || toggleSaved.ToggleShortcut.Key != 0x85)
+                    throw new InvalidOperationException("Toggle shortcut edits were not saved.");
+                ToggleModsCombo.SelectedItem = ReturnModsCombo.SelectedItem; ToggleKeyCombo.SelectedItem = ReturnKeyCombo.SelectedItem;
+                var toggleRejected = false;
+                try { await SaveShortcutControlsAsync(); } catch (ArgumentException) { toggleRejected = true; }
+                if (!toggleRejected || new SettingsStore(_dataDirectory).Load().ToggleShortcut.Key != 0x85)
+                    throw new InvalidOperationException("Toggle shortcut conflict was not rejected atomically.");
+                DefaultShortcuts(this, new RoutedEventArgs()); await SaveShortcutControlsAsync();
+                var toggleDefaults = new SettingsStore(_dataDirectory).Load();
+                if (toggleDefaults.ToggleShortcutEnabled || toggleDefaults.ToggleShortcut != ShortcutBinding.DefaultToggle)
+                    throw new InvalidOperationException("Toggle shortcut defaults were not restored.");
                 var extra = AdditionalShortcutsList.Items.Cast<ActionShortcutRow>().First(row => row.Action == GestureAction.Screenshot);
                 extra.SelectedKey = KeyChoices.First(key => key.Value == 0x78); await SaveShortcutControlsAsync();
                 if (new SettingsStore(_dataDirectory).Load().AdditionalShortcuts.First(entry => entry.Action == GestureAction.Screenshot).Binding.Key != 0x78)

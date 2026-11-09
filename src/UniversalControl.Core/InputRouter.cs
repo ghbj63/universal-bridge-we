@@ -139,7 +139,8 @@ public sealed class InputRouter
                 if (vk == 0x1B) { _escapes = now - _lastEscape <= 800 ? _escapes + 1 : 1; _lastEscape = now; }
                 else _escapes = 0;
                 var mods = _physical.Values.Select(v => HidReports.Modifier(v, 0, false)).Aggregate((byte)0, (a, b) => (byte)(a | b));
-                if (_remote && (_settings.ReturnShortcut.Matches(vk, mods) || _escapes >= 3))
+                if (_remote && (_settings.ReturnShortcut.Matches(vk, mods) ||
+                    (_settings.ToggleShortcutEnabled && _settings.ToggleShortcut.Matches(vk, mods)) || _escapes >= 3))
                 {
                     _quarantine.Add(id); GoLocal(L.T("緊急復帰ショートカットでWindowsへ戻しました")); return true;
                 }

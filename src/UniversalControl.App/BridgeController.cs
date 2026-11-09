@@ -189,18 +189,20 @@ public sealed class BridgeController : IAsyncDisposable
         _store.Save(normalized); Settings = normalized;
         Router.Configure(Settings); _input.Configure(Settings, Displays); Changed?.Invoke();
     }
-    public async Task ApplyShortcutsAsync(ShortcutBinding activate, ShortcutBinding back, ShortcutBinding? home = null, ShortcutBinding? search = null, ShortcutBinding? nextApp = null, IReadOnlyList<ActionShortcut>? additional = null)
+    public async Task ApplyShortcutsAsync(ShortcutBinding activate, ShortcutBinding back, ShortcutBinding? home = null, ShortcutBinding? search = null, ShortcutBinding? nextApp = null, IReadOnlyList<ActionShortcut>? additional = null, ShortcutBinding? toggle = null, bool? toggleEnabled = null)
     {
         home ??= Settings.HomeShortcut; search ??= Settings.SearchShortcut; nextApp ??= Settings.NextAppShortcut;
-        ShortcutBinding.ValidateAll(activate, back, home, search, nextApp);
+        toggle ??= Settings.ToggleShortcut; toggleEnabled ??= Settings.ToggleShortcutEnabled;
+        ShortcutBinding.ValidateAll(activate, back, home, search, nextApp, toggleEnabled.Value ? toggle : null);
         additional ??= Settings.AdditionalShortcuts;
-        ActionShortcuts.Validate(additional, activate, back, home, search, nextApp);
+        var reserved = new[] { activate, back, home, search, nextApp };
+        ActionShortcuts.Validate(additional, toggleEnabled.Value ? reserved.Append(toggle).ToArray() : reserved);
         Router.GoLocal(L.T("ショートカットの設定を変更するためWindowsへ戻しました"));
         var previous = Settings;
-        if (_nativeStarted && await _input.UpdateShortcutsAsync(activate, back) is { } conflict) throw new InvalidOperationException(conflict);
-        var updated = Settings with { ActivateShortcut = activate, ReturnShortcut = back, HomeShortcut = home, SearchShortcut = search, NextAppShortcut = nextApp, AdditionalShortcuts = additional.ToArray() };
+        if (_nativeStarted && await _input.UpdateShortcutsAsync(activate, back, toggle, toggleEnabled) is { } conflict) throw new InvalidOperationException(conflict);
+        var updated = Settings with { ActivateShortcut = activate, ReturnShortcut = back, HomeShortcut = home, SearchShortcut = search, NextAppShortcut = nextApp, ToggleShortcut = toggle, ToggleShortcutEnabled = toggleEnabled.Value, AdditionalShortcuts = additional.ToArray() };
         try { _store.Save(updated); }
-        catch { if (_nativeStarted) await _input.UpdateShortcutsAsync(previous.ActivateShortcut, previous.ReturnShortcut); throw; }
+        catch { if (_nativeStarted) await _input.UpdateShortcutsAsync(previous.ActivateShortcut, previous.ReturnShortcut, previous.ToggleShortcut, previous.ToggleShortcutEnabled); throw; }
         Settings = updated; Router.Configure(Settings); _input.Configure(Settings, Displays);
         Message = L.T("ショートカットを保存・適用しました。"); Log.Write(L.F("ショートカット変更: iPad={0}, Windows={1}", activate, back)); Changed?.Invoke();
     }

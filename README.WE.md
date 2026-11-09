@@ -24,6 +24,14 @@ top of **Input settings → Keyboard → Text editing**.
 Hold Shift for selection. Existing iOS modifier remapping is accommodated without
 applying the UB modifier swap twice to generated navigation actions.
 
+This branch also adds an optional **Toggle Between** shortcut, positioned between
+**Return to Windows** and **iPad Home**. Its checkbox defaults to off; the default
+binding is **Ctrl+Alt+T**, with the existing modifier and key choices (including
+F22) available. Enable it and click **Apply shortcuts** to use one chord in both
+directions. Release the keys to enter Apple-device mode; return to Windows is
+immediate. The separate activation/return shortcuts and triple-Escape return
+remain available. See [toggle setup and testing](docs/TOGGLE_SHORTCUT.en.md).
+
 See [setup, modifier behavior, held-key rules, and build/test instructions](docs/WINDOWS_TEXT_NAVIGATION.en.md).
 
 The project owner has confirmed the requested editing behavior works on their
